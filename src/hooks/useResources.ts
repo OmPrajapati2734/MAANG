@@ -10,6 +10,10 @@ interface Resource {
   content: string | null;
   company: string | null;
   step_id: string | null;
+  tags: string[];
+  video_duration: number | null;
+  is_user_generated: boolean;
+  created_by: string | null;
   created_at: string;
 }
 

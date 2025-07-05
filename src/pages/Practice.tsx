@@ -1,42 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Code, Database, Users, ArrowRight, Filter, Search } from 'lucide-react';
-import { practiceQuestions } from '../data/quizzes';
+import { Code, Database, Users, ArrowRight, Filter, Search, Play } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import PracticeQuestion from '../components/Practice/PracticeQuestion';
+import CodeEditor from '../components/CodeEditor/CodeEditor';
+
+interface Question {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: 'dsa' | 'system-design' | 'behavioral' | 'company-specific';
+  company: string | null;
+  role_level: string | null;
+  round_type: string | null;
+  tags: string[];
+  test_cases?: any[];
+  constraints?: string;
+  platform?: string;
+  platform_url?: string;
+}
 
 const Practice: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dsa' | 'systemDesign' | 'hr'>('dsa');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'dsa' | 'system-design' | 'behavioral' | 'company-specific'>('dsa');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [selectedCompany, setSelectedCompany] = useState<string>('all');
+  const [selectedRoleLevel, setSelectedRoleLevel] = useState<string>('all');
+  const [selectedRoundType, setSelectedRoundType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
 
   const tabs = [
-    { id: 'dsa', name: 'Data Structures & Algorithms', icon: Code, count: practiceQuestions.dsa.length },
-    { id: 'systemDesign', name: 'System Design', icon: Database, count: practiceQuestions.systemDesign.length },
-    { id: 'hr', name: 'HR & Behavioral', icon: Users, count: practiceQuestions.hr.length },
+    { id: 'dsa', name: 'Data Structures & Algorithms', icon: Code },
+    { id: 'system-design', name: 'System Design', icon: Database },
+    { id: 'behavioral', name: 'Behavioral', icon: Users },
+    { id: 'company-specific', name: 'Company Specific', icon: ArrowRight },
   ];
 
-  const difficulties = ['all', 'Easy', 'Medium', 'Hard'];
+  const difficulties = ['all', 'easy', 'medium', 'hard'];
+  const companies = ['all', 'Meta', 'Amazon', 'Apple', 'Netflix', 'Google'];
+  const roleLevels = ['all', 'sde-1', 'sde-2', 'sde-3', 'senior', 'staff', 'principal'];
+  const roundTypes = ['all', 'online', 'phone', 'onsite', 'final'];
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'Easy': return 'text-green-600 bg-green-100';
-      case 'Medium': return 'text-yellow-600 bg-yellow-100';
-      case 'Hard': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Add platform information for external links
+      const questionsWithPlatforms = (data || []).map(q => ({
+        ...q,
+        platform: getPlatformForQuestion(q),
+        platform_url: getPlatformUrl(q)
+      }));
+
+      setQuestions(questionsWithPlatforms);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const getPlatformForQuestion = (question: any): string | undefined => {
+    const title = question.title.toLowerCase();
+    
+    // Map to actual platforms
+    if (question.category === 'dsa') {
+      return 'LeetCode';
+    }
+    
+    if (question.category === 'system-design') {
+      return 'System Design Primer';
+    }
+    
+    if (question.category === 'behavioral') {
+      return 'AI Mentor';
+    }
+    
+    return 'Practice Platform';
+  };
+
+  const getPlatformUrl = (question: any): string | undefined => {
+    const title = question.title.toLowerCase();
+    
+    // Map to working URLs
+    if (title.includes('two sum')) {
+      return 'https://leetcode.com/problems/two-sum/';
+    }
+    if (title.includes('reverse linked list')) {
+      return 'https://leetcode.com/problems/reverse-linked-list/';
+    }
+    if (title.includes('binary tree') && title.includes('path sum')) {
+      return 'https://leetcode.com/problems/binary-tree-maximum-path-sum/';
+    }
+    
+    if (question.category === 'system-design') {
+      return 'https://github.com/donnemartin/system-design-primer';
+    }
+    
+    // Default to LeetCode for DSA problems
+    if (question.category === 'dsa') {
+      return 'https://leetcode.com/problemset/all/';
+    }
+    
+    return undefined;
+  };
+
   const getCurrentQuestions = () => {
-    const questions = practiceQuestions[activeTab];
     return questions.filter(q => {
+      const matchesCategory = q.category === activeTab;
       const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
+      const matchesCompany = selectedCompany === 'all' || q.company === selectedCompany;
+      const matchesRoleLevel = selectedRoleLevel === 'all' || q.role_level === selectedRoleLevel;
+      const matchesRoundType = selectedRoundType === 'all' || q.round_type === selectedRoundType;
       const matchesSearch = searchTerm === '' || 
         q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      return matchesDifficulty && matchesSearch;
+      return matchesCategory && matchesDifficulty && matchesCompany && matchesRoleLevel && matchesRoundType && matchesSearch;
     });
   };
+
+  const handleQuestionClick = (question: Question) => {
+    // For DSA questions, open code editor
+    if (question.category === 'dsa') {
+      setSelectedQuestion(question);
+      setShowCodeEditor(true);
+    }
+    // For behavioral questions or questions without external links, open AI mentor
+    else if (question.category === 'behavioral' || !question.platform_url) {
+      window.location.href = '/mentor';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  const currentQuestions = getCurrentQuestions();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -47,8 +165,8 @@ const Practice: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Practice Questions</h1>
-          <p className="text-gray-600">Sharpen your skills with curated interview questions</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">💻 Practice Questions</h1>
+          <p className="text-gray-600">Sharpen your skills with curated interview questions and integrated code editor</p>
         </motion.div>
 
         {/* Tabs */}
@@ -63,6 +181,7 @@ const Practice: React.FC = () => {
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
+                const count = questions.filter(q => q.category === tab.id).length;
                 
                 return (
                   <button
@@ -79,7 +198,7 @@ const Practice: React.FC = () => {
                     <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
                       isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {tab.count}
+                      {count}
                     </span>
                   </button>
                 );
@@ -88,39 +207,95 @@ const Practice: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Filters */}
+        {/* Enhanced Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8 flex flex-col sm:flex-row gap-4"
+          className="mb-8 space-y-4"
         >
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search questions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search questions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Filter className="w-5 h-5 text-gray-400" />
+              <select
+                value={selectedDifficulty}
+                onChange={(e) => setSelectedDifficulty(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {difficulties.map(difficulty => (
+                  <option key={difficulty} value={difficulty}>
+                    {difficulty === 'all' ? 'All Difficulties' : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-400" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <select
-              value={selectedDifficulty}
-              onChange={(e) => setSelectedDifficulty(e.target.value)}
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              {difficulties.map(difficulty => (
-                <option key={difficulty} value={difficulty}>
-                  {difficulty === 'all' ? 'All Difficulties' : difficulty}
+              {companies.map(company => (
+                <option key={company} value={company}>
+                  {company === 'all' ? 'All Companies' : company}
                 </option>
               ))}
             </select>
+
+            <select
+              value={selectedRoleLevel}
+              onChange={(e) => setSelectedRoleLevel(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {roleLevels.map(level => (
+                <option key={level} value={level}>
+                  {level === 'all' ? 'All Levels' : level.toUpperCase()}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedRoundType}
+              onChange={(e) => setSelectedRoundType(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {roundTypes.map(type => (
+                <option key={type} value={type}>
+                  {type === 'all' ? 'All Rounds' : type.charAt(0).toUpperCase() + type.slice(1)}
+                </option>
+              ))}
+            </select>
+
+            {activeTab === 'dsa' && (
+              <button
+                onClick={() => {
+                  const dsaQuestion = currentQuestions.find(q => q.category === 'dsa');
+                  if (dsaQuestion) {
+                    setSelectedQuestion(dsaQuestion);
+                    setShowCodeEditor(true);
+                  }
+                }}
+                className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Play className="w-4 h-4" />
+                <span>Code Editor</span>
+              </button>
+            )}
           </div>
         </motion.div>
 
@@ -131,56 +306,22 @@ const Practice: React.FC = () => {
           transition={{ delay: 0.3 }}
           className="grid gap-6"
         >
-          {getCurrentQuestions().map((question, index) => (
+          {currentQuestions.map((question, index) => (
             <motion.div
               key={question.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{question.title}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(question.difficulty)}`}>
-                      {question.difficulty}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 mb-3 leading-relaxed">{question.description}</p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {question.tags.map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <div className="text-sm font-medium text-gray-700 mb-2">Approach:</div>
-                <p className="text-sm text-gray-600">{question.solution}</p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Click to practice this question
-                </div>
-                <button className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium">
-                  <span>Practice</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+              <PracticeQuestion
+                question={question}
+                onClick={() => handleQuestionClick(question)}
+              />
             </motion.div>
           ))}
         </motion.div>
 
-        {getCurrentQuestions().length === 0 && (
+        {currentQuestions.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -192,6 +333,23 @@ const Practice: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
             <p className="text-gray-600">Try adjusting your filters or search terms</p>
           </motion.div>
+        )}
+
+        {/* Code Editor Modal */}
+        {showCodeEditor && selectedQuestion && (
+          <CodeEditor
+            questionId={selectedQuestion.id}
+            question={{
+              title: selectedQuestion.title,
+              description: selectedQuestion.description,
+              constraints: selectedQuestion.constraints,
+              testCases: selectedQuestion.test_cases
+            }}
+            onClose={() => {
+              setShowCodeEditor(false);
+              setSelectedQuestion(null);
+            }}
+          />
         )}
       </div>
     </div>

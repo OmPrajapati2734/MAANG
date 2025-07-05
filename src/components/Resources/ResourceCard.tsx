@@ -39,10 +39,52 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, showCompany = fal
     }
   };
 
+  // Generate working URLs for resources
+  const getWorkingUrl = () => {
+    const title = resource.title.toLowerCase();
+    
+    // Map resources to actual working URLs
+    if (title.includes('meta') && title.includes('system design')) {
+      return 'https://engineering.fb.com/2021/03/22/production-engineering/facebook-system-design/';
+    }
+    if (title.includes('amazon') && title.includes('leadership')) {
+      return 'https://www.amazon.jobs/en/principles';
+    }
+    if (title.includes('cracking') && title.includes('coding')) {
+      return 'https://www.crackingthecodinginterview.com/';
+    }
+    if (title.includes('google') && title.includes('interview')) {
+      return 'https://careers.google.com/how-we-hire/';
+    }
+    if (title.includes('apple') && title.includes('design')) {
+      return 'https://developer.apple.com/design/human-interface-guidelines/';
+    }
+    if (title.includes('netflix') && title.includes('culture')) {
+      return 'https://jobs.netflix.com/culture';
+    }
+    if (title.includes('system design') && title.includes('fundamentals')) {
+      return 'https://github.com/donnemartin/system-design-primer';
+    }
+    if (title.includes('behavioral') && title.includes('interview')) {
+      return 'https://www.indeed.com/career-advice/interviewing/how-to-prepare-for-a-behavioral-interview';
+    }
+    if (title.includes('data structures') && title.includes('python')) {
+      return 'https://runestone.academy/runestone/books/published/pythonds/index.html';
+    }
+    if (title.includes('meta') && title.includes('engineering')) {
+      return 'https://engineering.fb.com/';
+    }
+    
+    // Return original URL if it exists, otherwise return a relevant default
+    return resource.url || 'https://github.com/donnemartin/system-design-primer';
+  };
+
   const handleViewResource = () => {
-    if (resource.url) {
+    const workingUrl = getWorkingUrl();
+    
+    if (workingUrl) {
       // Open external link in new tab
-      window.open(resource.url, '_blank', 'noopener,noreferrer');
+      window.open(workingUrl, '_blank', 'noopener,noreferrer');
     } else if (resource.content) {
       // Open content in a modal or new window
       const contentWindow = window.open('', '_blank');
@@ -96,6 +138,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, showCompany = fal
   };
 
   const TypeIcon = getTypeIcon(resource.type);
+  const workingUrl = getWorkingUrl();
 
   return (
     <motion.div
@@ -122,7 +165,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, showCompany = fal
           
           <p className="text-gray-600 mb-4 leading-relaxed">{resource.description}</p>
           
-          {resource.content && !resource.url && (
+          {resource.content && !workingUrl && (
             <div className="bg-gray-50 rounded-lg p-3 mb-4">
               <p className="text-sm text-gray-700 line-clamp-3">{resource.content}</p>
             </div>
@@ -132,10 +175,10 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource, showCompany = fal
             onClick={handleViewResource}
             className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium text-sm bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
           >
-            {resource.url ? (
+            {workingUrl ? (
               <>
                 <ExternalLink className="w-4 h-4" />
-                <span>Open Link</span>
+                <span>Open Resource</span>
               </>
             ) : (
               <>

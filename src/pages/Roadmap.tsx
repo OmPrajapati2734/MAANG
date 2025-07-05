@@ -1,18 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Trophy, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Trophy, Clock, Play } from 'lucide-react';
 import RoadmapStep from '../components/Roadmap/RoadmapStep';
+import StepDetail from '../components/Roadmap/StepDetail';
 import { companies, roadmaps } from '../data/companies';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 const Roadmap: React.FC = () => {
   const { companyId } = useParams<{ companyId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [activeStep, setActiveStep] = useState<string | null>(null);
+  const [selectedStep, setSelectedStep] = useState<any>(null);
+  const [userProgress, setUserProgress] = useState<any[]>([]);
 
   const company = companies.find(c => c.id === companyId);
   const roadmap = companyId ? roadmaps[companyId as keyof typeof roadmaps] : [];
+
+  useEffect(() => {
+    if (user && companyId) {
+      loadUserProgress();
+    }
+  }, [user, companyId]);
+
+  const loadUserProgress = async () => {
+    if (!user || !companyId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('company', company?.name);
+
+      if (error) throw error;
+
+      const completed = new Set(
+        data?.filter(p => p.completed).map(p => p.step_id) || []
+      );
+      setCompletedSteps(completed);
+      setUserProgress(data || []);
+
+      // Set active step to first incomplete step
+      const firstIncomplete = roadmap.find(step => !completed.has(step.id));
+      if (firstIncomplete) {
+        setActiveStep(firstIncomplete.id);
+      }
+    } catch (error) {
+      console.error('Error loading progress:', error);
+    }
+  };
 
   if (!company || !roadmap) {
     return (
@@ -32,14 +72,49 @@ const Roadmap: React.FC = () => {
 
   const progressPercentage = (completedSteps.size / roadmap.length) * 100;
 
-  const handleStepClick = (stepId: string) => {
-    setActiveStep(stepId);
-    // In a real app, this would open a detailed view or quiz
+  const handleStepClick = (step: any) => {
+    setSelectedStep({
+      ...step,
+      company: company.name
+    });
   };
 
-  const markStepComplete = (stepId: string) => {
-    setCompletedSteps(prev => new Set([...prev, stepId]));
+  const handleStepComplete = async (stepId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_progress')
+        .upsert({
+          user_id: user.id,
+          company: company.name,
+          step_id: stepId,
+          completed: true,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setCompletedSteps(prev => new Set([...prev, stepId]));
+      
+      // Move to next step
+      const currentIndex = roadmap.findIndex(s => s.id === stepId);
+      if (currentIndex < roadmap.length - 1) {
+        setActiveStep(roadmap[currentIndex + 1].id);
+      }
+    } catch (error) {
+      console.error('Error completing step:', error);
+    }
   };
+
+  const totalTimeEstimate = roadmap.reduce((total, step) => {
+    const duration = step.duration.match(/\d+/);
+    return total + (duration ? parseInt(duration[0]) : 0);
+  }, 0);
+
+  const averageScore = userProgress.length > 0 
+    ? Math.round(userProgress.reduce((sum, p) => sum + (p.score || 0), 0) / userProgress.length)
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,7 +159,7 @@ const Roadmap: React.FC = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
               <div className="flex items-center">
                 <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
@@ -101,10 +176,7 @@ const Roadmap: React.FC = () => {
                 <Clock className="w-5 h-5 text-blue-500 mr-2" />
                 <div>
                   <div className="text-lg font-semibold text-gray-900">
-                    {roadmap.reduce((total, step) => {
-                      const duration = step.duration.match(/\d+/);
-                      return total + (duration ? parseInt(duration[0]) : 0);
-                    }, 0)} days
+                    {totalTimeEstimate} days
                   </div>
                   <div className="text-sm text-gray-600">Estimated Time</div>
                 </div>
@@ -114,8 +186,19 @@ const Roadmap: React.FC = () => {
               <div className="flex items-center">
                 <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
                 <div>
-                  <div className="text-lg font-semibold text-gray-900">85%</div>
-                  <div className="text-sm text-gray-600">Success Rate</div>
+                  <div className="text-lg font-semibold text-gray-900">{averageScore}%</div>
+                  <div className="text-sm text-gray-600">Average Score</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center">
+                <Play className="w-5 h-5 text-purple-500 mr-2" />
+                <div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {userProgress.filter(p => p.video_progress && Object.keys(p.video_progress).length > 0).length}
+                  </div>
+                  <div className="text-sm text-gray-600">Videos Watched</div>
                 </div>
               </div>
             </div>
@@ -143,7 +226,7 @@ const Roadmap: React.FC = () => {
                   step={step}
                   isCompleted={completedSteps.has(step.id)}
                   isActive={activeStep === step.id}
-                  onClick={() => handleStepClick(step.id)}
+                  onClick={() => handleStepClick(step)}
                 />
               </motion.div>
             ))}
@@ -169,7 +252,23 @@ const Roadmap: React.FC = () => {
           >
             Ask AI Mentor
           </button>
+          <button
+            onClick={() => navigate('/resources')}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+          >
+            View Resources
+          </button>
         </motion.div>
+
+        {/* Step Detail Modal */}
+        {selectedStep && (
+          <StepDetail
+            step={selectedStep}
+            onClose={() => setSelectedStep(null)}
+            onComplete={() => handleStepComplete(selectedStep.id)}
+            isCompleted={completedSteps.has(selectedStep.id)}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, Video, MessageCircle, Send, Bot, User, Loader } from 'lucide-react';
+import { Mic, Video, MessageCircle, Send, Bot, User, Loader, Lightbulb } from 'lucide-react';
+import { aiService, ChatMessage } from '../services/aiService';
 
 const Mentor: React.FC = () => {
   const [message, setMessage] = useState('');
@@ -11,67 +12,16 @@ const Mentor: React.FC = () => {
     {
       id: 1,
       type: 'ai',
-      content: "Hello! I'm your AI interview mentor. How can I help you prepare for your MAANG interviews today?",
-      timestamp: new Date()
+      content: "Hello! I'm your AI interview mentor powered by advanced AI. I can help you prepare for MAANG interviews with personalized guidance, mock interviews, and detailed explanations. How can I help you today?",
+      timestamp: new Date(),
+      suggestions: [
+        "Help me prepare for Meta interviews",
+        "Practice system design questions", 
+        "Review behavioral interview techniques",
+        "Create a study plan"
+      ]
     }
   ]);
-
-  // AI response templates based on keywords
-  const getAIResponse = (userMessage: string): string => {
-    const msg = userMessage.toLowerCase();
-    
-    if (msg.includes('meta') || msg.includes('facebook')) {
-      return "For Meta interviews, focus on these key areas:\n\n1. **System Design**: Practice designing scalable systems like News Feed, Messenger, or Instagram\n2. **Coding**: Master graph algorithms, trees, and dynamic programming\n3. **Behavioral**: Prepare stories around Meta's core values - Move Fast, Be Bold, Focus on Impact\n4. **Culture**: Understand Meta's mission to connect the world\n\nWould you like me to dive deeper into any of these areas?";
-    }
-    
-    if (msg.includes('amazon')) {
-      return "Amazon interviews are unique due to their Leadership Principles. Here's how to prepare:\n\n1. **Leadership Principles**: Master all 16 principles with concrete STAR examples\n2. **Coding**: Focus on arrays, strings, trees, and optimization problems\n3. **System Design**: Think about scalability, reliability, and cost optimization\n4. **Behavioral**: Every answer should tie back to a leadership principle\n\nKey principles to focus on: Customer Obsession, Ownership, Invent and Simplify, and Dive Deep. Need help with specific examples?";
-    }
-    
-    if (msg.includes('google')) {
-      return "Google interviews emphasize algorithmic thinking and 'Googleyness'. Here's your prep strategy:\n\n1. **Algorithms**: Master sorting, searching, graph algorithms, and dynamic programming\n2. **System Design**: Focus on distributed systems, caching, and load balancing\n3. **Googleyness**: Show intellectual curiosity, collaboration, and comfort with ambiguity\n4. **General Cognitive Ability**: Demonstrate problem-solving skills\n\nGoogle loves candidates who can think through problems systematically. Want to practice a coding problem?";
-    }
-    
-    if (msg.includes('apple')) {
-      return "Apple interviews focus heavily on design thinking and attention to detail:\n\n1. **Design Philosophy**: Understand Apple's focus on simplicity and user experience\n2. **Technical Depth**: Be ready for deep technical discussions about your experience\n3. **Problem Solving**: Show how you approach complex problems methodically\n4. **Culture Fit**: Demonstrate passion for creating amazing user experiences\n\nApple values candidates who can think differently and challenge the status quo. What specific role are you targeting?";
-    }
-    
-    if (msg.includes('netflix')) {
-      return "Netflix has a unique culture focused on high performance:\n\n1. **Culture**: Study the Netflix Culture Deck thoroughly\n2. **Freedom & Responsibility**: Show you can work independently and make good decisions\n3. **Technical Excellence**: Demonstrate expertise in your domain\n4. **Direct Feedback**: Be comfortable giving and receiving honest feedback\n\nNetflix hires only 'A-players' and expects exceptional performance. How familiar are you with their culture principles?";
-    }
-    
-    if (msg.includes('system design') || msg.includes('design')) {
-      return "System design interviews test your ability to architect large-scale systems. Here's a structured approach:\n\n1. **Clarify Requirements**: Ask about scale, features, and constraints\n2. **High-Level Design**: Start with basic components and data flow\n3. **Deep Dive**: Discuss database design, APIs, and key algorithms\n4. **Scale**: Address bottlenecks and scaling strategies\n5. **Wrap Up**: Discuss monitoring, security, and edge cases\n\nCommon topics: Chat systems, URL shorteners, social media feeds, video streaming. Which would you like to practice?";
-    }
-    
-    if (msg.includes('coding') || msg.includes('algorithm') || msg.includes('dsa')) {
-      return "For coding interviews, focus on these key areas:\n\n1. **Data Structures**: Arrays, LinkedLists, Trees, Graphs, Hash Tables\n2. **Algorithms**: Sorting, Searching, DFS/BFS, Dynamic Programming\n3. **Problem-Solving**: Break down problems, consider edge cases\n4. **Communication**: Explain your thought process clearly\n5. **Optimization**: Analyze time/space complexity\n\nPractice on LeetCode, focusing on medium-level problems. Start with patterns like Two Pointers, Sliding Window, and Tree Traversals. Need help with a specific topic?";
-    }
-    
-    if (msg.includes('behavioral') || msg.includes('star')) {
-      return "Behavioral interviews assess your soft skills and cultural fit. Use the STAR method:\n\n**S**ituation: Set the context\n**T**ask: Explain your responsibility\n**A**ction: Describe what you did\n**R**esult: Share the outcome and learnings\n\nCommon questions:\n- Tell me about a challenging project\n- Describe a time you disagreed with your manager\n- How do you handle tight deadlines?\n- Give an example of leadership\n\nPrepare 5-7 diverse stories that showcase different skills. Want to practice with a specific scenario?";
-    }
-    
-    if (msg.includes('mock interview') || msg.includes('practice')) {
-      return "Great idea! Mock interviews are crucial for preparation. Here's how we can practice:\n\n1. **Coding Mock**: I can give you a problem to solve step-by-step\n2. **System Design Mock**: We can design a system together\n3. **Behavioral Mock**: I can ask you behavioral questions\n4. **Company-Specific**: Focus on a particular company's style\n\nWhich type would you like to start with? I'll provide real-time feedback and suggestions for improvement.";
-    }
-    
-    if (msg.includes('salary') || msg.includes('negotiation')) {
-      return "Salary negotiation is crucial for maximizing your offer:\n\n1. **Research**: Know market rates for your role and location\n2. **Multiple Offers**: Having competing offers strengthens your position\n3. **Total Compensation**: Consider base salary, equity, bonuses, and benefits\n4. **Timing**: Negotiate after receiving the offer, not during interviews\n5. **Be Professional**: Express enthusiasm while advocating for fair compensation\n\nFor MAANG companies, total compensation often includes significant equity. Research levels.fyi for accurate data. Need help with negotiation strategies?";
-    }
-    
-    if (msg.includes('timeline') || msg.includes('how long')) {
-      return "Interview preparation timeline depends on your current level:\n\n**3-6 months** (Recommended):\n- Month 1-2: DSA fundamentals and easy problems\n- Month 3-4: Medium problems and system design basics\n- Month 5-6: Hard problems, mock interviews, behavioral prep\n\n**1-2 months** (Intensive):\n- Focus on your weak areas\n- Daily coding practice\n- Weekly mock interviews\n- Company-specific preparation\n\nConsistency is key - better to study 1-2 hours daily than cramming. What's your current timeline?";
-    }
-    
-    // Default responses for general queries
-    if (msg.includes('help') || msg.includes('start')) {
-      return "I'm here to help you succeed in your MAANG interviews! I can assist with:\n\n🔹 **Company-specific preparation** (Meta, Amazon, Apple, Netflix, Google)\n🔹 **Technical topics** (DSA, System Design, Coding)\n🔹 **Behavioral interviews** (STAR method, leadership stories)\n🔹 **Mock interviews** (Practice with real-time feedback)\n🔹 **Study plans** (Customized preparation timelines)\n\nWhat specific area would you like to focus on today?";
-    }
-    
-    // Fallback response
-    return "That's a great question! While I can provide guidance on interview preparation, I'd recommend being more specific about what you'd like to focus on. For example:\n\n- 'Help me prepare for Meta system design interviews'\n- 'What coding patterns should I focus on for Google?'\n- 'Can you give me behavioral questions for Amazon?'\n- 'I want to practice a mock interview'\n\nWhat specific aspect of interview preparation interests you most?";
-  };
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -87,17 +37,40 @@ const Mentor: React.FC = () => {
     setMessage('');
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
-      const aiResponse = {
+    try {
+      // Prepare conversation context for AI
+      const chatHistory: ChatMessage[] = messages
+        .slice(-5) // Last 5 messages for context
+        .map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
+      
+      chatHistory.push({ role: 'user', content: message });
+
+      const aiResponse = await aiService.sendMessage(chatHistory);
+      
+      const aiMessage = {
         id: messages.length + 2,
         type: 'ai' as const,
-        content: getAIResponse(message),
+        content: aiResponse.message,
+        timestamp: new Date(),
+        suggestions: aiResponse.suggestions
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('AI response error:', error);
+      const errorMessage = {
+        id: messages.length + 2,
+        type: 'ai' as const,
+        content: "I apologize, but I'm having trouble connecting to my AI services right now. Let me provide some general guidance based on your question.",
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleQuickQuestion = (question: string) => {
@@ -105,14 +78,45 @@ const Mentor: React.FC = () => {
     setTimeout(() => handleSendMessage(), 100);
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setMessage(suggestion);
+    setTimeout(() => handleSendMessage(), 100);
+  };
+
   const handleVoiceToggle = () => {
     setIsRecording(!isRecording);
     // In a real app, this would start/stop voice recording
+    if (!isRecording) {
+      // Simulate voice input
+      setTimeout(() => {
+        setMessage("I'd like to practice for a Google system design interview");
+        setIsRecording(false);
+      }, 2000);
+    }
   };
 
   const handleVideoToggle = () => {
     setIsVideoCall(!isVideoCall);
     // In a real app, this would start/stop video call
+  };
+
+  const startMockInterview = async (type: 'coding' | 'system-design' | 'behavioral') => {
+    setIsTyping(true);
+    try {
+      const mockQuestion = await aiService.generateMockInterview(type);
+      const mockMessage = {
+        id: messages.length + 1,
+        type: 'ai' as const,
+        content: `🎯 **Mock ${type.replace('-', ' ')} Interview**\n\n${mockQuestion.question}\n\nTake your time to think through this. I'll provide feedback and guidance as you work through it.`,
+        timestamp: new Date(),
+        suggestions: mockQuestion.hints
+      };
+      setMessages(prev => [...prev, mockMessage]);
+    } catch (error) {
+      console.error('Mock interview error:', error);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -125,7 +129,7 @@ const Mentor: React.FC = () => {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Interview Mentor</h1>
-          <p className="text-gray-600">Get personalized guidance for your interview preparation</p>
+          <p className="text-gray-600">Get personalized guidance powered by advanced AI technology</p>
         </motion.div>
 
         {/* Mentor Interface */}
@@ -144,7 +148,7 @@ const Mentor: React.FC = () => {
                 </div>
                 <div className="text-white">
                   <h3 className="font-semibold">AI Mentor</h3>
-                  <p className="text-sm text-white/80">Ready to help you succeed</p>
+                  <p className="text-sm text-white/80">Powered by advanced AI • Ready to help you succeed</p>
                 </div>
               </div>
 
@@ -153,9 +157,10 @@ const Mentor: React.FC = () => {
                   onClick={handleVoiceToggle}
                   className={`p-3 rounded-full transition-colors ${
                     isRecording
-                      ? 'bg-red-500 hover:bg-red-600'
+                      ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                       : 'bg-white/20 hover:bg-white/30'
                   }`}
+                  title={isRecording ? 'Stop recording' : 'Start voice input'}
                 >
                   <Mic className="w-5 h-5 text-white" />
                 </button>
@@ -166,6 +171,7 @@ const Mentor: React.FC = () => {
                       ? 'bg-green-500 hover:bg-green-600'
                       : 'bg-white/20 hover:bg-white/30'
                   }`}
+                  title={isVideoCall ? 'End video call' : 'Start video call'}
                 >
                   <Video className="w-5 h-5 text-white" />
                 </button>
@@ -178,7 +184,24 @@ const Mentor: React.FC = () => {
                 animate={{ opacity: 1, height: 200 }}
                 className="mt-4 bg-black/20 rounded-lg flex items-center justify-center"
               >
-                <p className="text-white/80">Video call would appear here</p>
+                <div className="text-center text-white/80">
+                  <Video className="w-12 h-12 mx-auto mb-2" />
+                  <p>Video call interface would appear here</p>
+                  <p className="text-sm">Connect with AI mentor for face-to-face practice</p>
+                </div>
+              </motion.div>
+            )}
+
+            {isRecording && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 60 }}
+                className="mt-4 bg-red-500/20 rounded-lg flex items-center justify-center"
+              >
+                <div className="flex items-center space-x-3 text-white">
+                  <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
+                  <span>Listening... Speak your question</span>
+                </div>
               </motion.div>
             )}
           </div>
@@ -214,6 +237,25 @@ const Mentor: React.FC = () => {
                     }`}>
                       {msg.timestamp.toLocaleTimeString()}
                     </p>
+                    
+                    {/* AI Suggestions */}
+                    {msg.type === 'ai' && msg.suggestions && msg.suggestions.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center space-x-1 text-xs text-gray-600">
+                          <Lightbulb className="w-3 h-3" />
+                          <span>Suggestions:</span>
+                        </div>
+                        {msg.suggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSuggestionClick(suggestion)}
+                            className="block w-full text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1 rounded transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -265,11 +307,67 @@ const Mentor: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Quick Questions */}
+        {/* Mock Interview Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="mt-8"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Start Mock Interview</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            <button
+              onClick={() => startMockInterview('coding')}
+              className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-left"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Coding Interview</h4>
+                  <p className="text-sm text-gray-600">Practice algorithms and data structures</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => startMockInterview('system-design')}
+              className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-left"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">System Design</h4>
+                  <p className="text-sm text-gray-600">Design scalable systems</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => startMockInterview('behavioral')}
+              className="p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-left"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">Behavioral</h4>
+                  <p className="text-sm text-gray-600">Practice STAR method responses</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Quick Questions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
           className="mt-8"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Questions</h3>

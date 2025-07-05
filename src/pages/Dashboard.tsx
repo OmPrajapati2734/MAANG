@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import CompanyCard from '../components/Dashboard/CompanyCard';
 import ProgressCard from '../components/Dashboard/ProgressCard';
+import GoalTracker from '../components/Goals/GoalTracker';
 import { companies } from '../data/companies';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Target, Calendar, Award, TrendingUp } from 'lucide-react';
+import { Target, Calendar, Award, TrendingUp, Mic, Trophy, BookOpen, Code } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
 
   // Mock data - in real app, this would come from Supabase
   const progressData = [
@@ -32,6 +32,37 @@ const Dashboard: React.FC = () => {
     { icon: Calendar, label: 'Days Streak', value: '12', color: 'text-green-600' },
     { icon: Award, label: 'Completed', value: '6/12', color: 'text-purple-600' },
     { icon: TrendingUp, label: 'Progress', value: '+15%', color: 'text-orange-600' },
+  ];
+
+  const quickActions = [
+    {
+      title: 'Practice Questions',
+      description: 'Solve coding problems',
+      icon: Code,
+      color: 'from-blue-500 to-blue-600',
+      href: '/practice'
+    },
+    {
+      title: 'Mock Interview',
+      description: 'AI-powered interview practice',
+      icon: Mic,
+      color: 'from-purple-500 to-purple-600',
+      href: '/mock-interview'
+    },
+    {
+      title: 'Success Stories',
+      description: 'Learn from others',
+      icon: Trophy,
+      color: 'from-green-500 to-green-600',
+      href: '/success-stories'
+    },
+    {
+      title: 'Study Resources',
+      description: 'Curated learning materials',
+      icon: BookOpen,
+      color: 'from-orange-500 to-orange-600',
+      href: '/resources'
+    }
   ];
 
   const handleCompanySelect = (companyId: string) => {
@@ -76,11 +107,37 @@ const Dashboard: React.FC = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Progress Cards */}
+            {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+            >
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {quickActions.map((action, index) => (
+                  <motion.button
+                    key={action.title}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-white rounded-xl shadow-sm p-4 border border-gray-200 hover:shadow-md transition-shadow text-left"
+                    onClick={() => navigate(action.href)}
+                  >
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${action.color} flex items-center justify-center mb-3`}>
+                      <action.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1">{action.title}</h3>
+                    <p className="text-xs text-gray-600">{action.description}</p>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Progress Cards */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
             >
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Progress</h2>
               <div className="grid gap-4">
@@ -101,9 +158,9 @@ const Dashboard: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Target Company</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">🧭 Company Roadmaps</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 {companies.map((company) => {
                   const progress = progressData.find(p => p.company === company.name);
@@ -122,11 +179,20 @@ const Dashboard: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Goal Tracker */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <GoalTracker />
+            </motion.div>
+
             {/* Performance Chart */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.6 }}
               className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Overview</h3>
@@ -140,32 +206,6 @@ const Dashboard: React.FC = () => {
                     <Bar dataKey="score" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button
-                  onClick={() => navigate('/practice')}
-                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="font-medium text-gray-900">Practice Questions</div>
-                  <div className="text-sm text-gray-600">Solve DSA and system design problems</div>
-                </button>
-                <button
-                  onClick={() => navigate('/mentor')}
-                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="font-medium text-gray-900">AI Mentor</div>
-                  <div className="text-sm text-gray-600">Get personalized guidance</div>
-                </button>
               </div>
             </motion.div>
           </div>
