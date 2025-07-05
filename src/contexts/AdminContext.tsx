@@ -45,32 +45,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       console.log('Checking admin status for user:', user.id);
       
-      // First, ensure the user has a record in the users table
-      const { data: userRecord, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('auth_id', user.id)
-        .maybeSingle();
-
-      if (userError) {
-        console.error('Error fetching user:', userError);
-      } else if (!userRecord) {
-        console.log('No user record found, creating one...');
-        // Create user record if it doesn't exist
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([{
-            auth_id: user.id,
-            email: user.email || '',
-            full_name: user.user_metadata?.full_name || null
-          }]);
-        
-        if (insertError) {
-          console.error('Error creating user record:', insertError);
-        }
-      }
-
-      // Now check admin status
+      // Check admin status using the new admins table
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('*')

@@ -12,6 +12,8 @@ import Practice from './pages/Practice';
 import Mentor from './pages/Mentor';
 import Resources from './pages/Resources';
 import ResetPassword from './pages/ResetPassword';
+import MockInterview from './pages/MockInterview';
+import SuccessStories from './pages/SuccessStories';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import QuestionManager from './pages/Admin/QuestionManager';
 import QuizManager from './pages/Admin/QuizManager';
@@ -76,6 +78,16 @@ const AppContent: React.FC = () => {
         <Route path="/resources" element={
           <ProtectedRoute>
             <Resources />
+          </ProtectedRoute>
+        } />
+        <Route path="/mock-interview" element={
+          <ProtectedRoute>
+            <MockInterview />
+          </ProtectedRoute>
+        } />
+        <Route path="/success-stories" element={
+          <ProtectedRoute>
+            <SuccessStories />
           </ProtectedRoute>
         } />
         

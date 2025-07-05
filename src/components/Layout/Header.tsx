@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
-import { LogOut, User, Home, BookOpen, MessageCircle, Settings, FileText, Key } from 'lucide-react';
+import { LogOut, User, Home, BookOpen, MessageCircle, Settings, FileText, Key, Trophy, Target, Mic } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import ChangePasswordForm from '../Auth/ChangePasswordForm';
 
@@ -16,7 +16,9 @@ const Header: React.FC = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Practice', href: '/practice', icon: BookOpen },
+    { name: 'Mock Interview', href: '/mock-interview', icon: Mic },
     { name: 'Resources', href: '/resources', icon: FileText },
+    { name: 'Success Stories', href: '/success-stories', icon: Trophy },
     { name: 'AI Mentor', href: '/mentor', icon: MessageCircle },
   ];
 

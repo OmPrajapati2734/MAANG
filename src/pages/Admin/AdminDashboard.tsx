@@ -30,7 +30,7 @@ const AdminDashboard: React.FC = () => {
   const fetchStats = async () => {
     try {
       const [usersResult, questionsResult, resourcesResult, attemptsResult] = await Promise.all([
-        supabase.from('users').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('questions').select('id', { count: 'exact', head: true }),
         supabase.from('resources').select('id', { count: 'exact', head: true }),
         supabase.from('quiz_attempts').select('id', { count: 'exact', head: true })
