@@ -102,15 +102,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      // Clear user state immediately to prevent UI issues
+      setUser(null);
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
+        // Handle specific auth session errors gracefully
+        if (error.message.includes('Auth session missing') ||
+            error.message.includes('session_not_found') ||
+            error.message.includes('Session from session_id claim in JWT does not exist')) {
+          console.warn('Sign out attempted but session was already missing - user is already logged out');
+          return; // Don't throw error since user is effectively signed out
+        }
         console.error('Sign out error:', error);
         throw error;
       }
       console.log('Sign out successful');
     } catch (error) {
       console.error('Sign out failed:', error);
-      throw error;
+      // Don't re-throw the error to prevent UI crashes
+      // User state is already cleared above
     }
   };
 

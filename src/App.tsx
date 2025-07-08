@@ -1,10 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AdminProvider, useAdmin } from './contexts/AdminContext';
 import Header from './components/Layout/Header';
-import AdminHeader from './components/Layout/AdminHeader';
-import AdminRoute from './components/Admin/AdminRoute';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Roadmap from './pages/Roadmap';
@@ -14,12 +11,9 @@ import Resources from './pages/Resources';
 import ResetPassword from './pages/ResetPassword';
 import MockInterview from './pages/MockInterview';
 import SuccessStories from './pages/SuccessStories';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import QuestionManager from './pages/Admin/QuestionManager';
-import QuizManager from './pages/Admin/QuizManager';
-import ResourceManager from './pages/Admin/ResourceManager';
-import CompanyManager from './pages/Admin/CompanyManager';
-import Analytics from './pages/Admin/Analytics';
+import SystemDesign from './pages/SystemDesign';
+import ResumeReview from './pages/ResumeReview';
+import Profile from './pages/Profile';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -37,7 +31,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-  const { isAdmin } = useAdmin();
 
   if (loading) {
     return (
@@ -47,11 +40,9 @@ const AppContent: React.FC = () => {
     );
   }
 
-  const isAdminRoute = location.pathname.startsWith('/admin');
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {user && (isAdminRoute && isAdmin ? <AdminHeader /> : <Header />)}
+      {user && <Header />}
       <Routes>
         <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -68,6 +59,11 @@ const AppContent: React.FC = () => {
         <Route path="/practice" element={
           <ProtectedRoute>
             <Practice />
+          </ProtectedRoute>
+        } />
+        <Route path="/system-design" element={
+          <ProtectedRoute>
+            <SystemDesign />
           </ProtectedRoute>
         } />
         <Route path="/mentor" element={
@@ -90,37 +86,15 @@ const AppContent: React.FC = () => {
             <SuccessStories />
           </ProtectedRoute>
         } />
-        
-        {/* Admin Routes */}
-        <Route path="/admin" element={
-          <AdminRoute>
-            <AdminDashboard />
-          </AdminRoute>
+        <Route path="/resume-review" element={
+          <ProtectedRoute>
+            <ResumeReview />
+          </ProtectedRoute>
         } />
-        <Route path="/admin/questions" element={
-          <AdminRoute>
-            <QuestionManager />
-          </AdminRoute>
-        } />
-        <Route path="/admin/quizzes" element={
-          <AdminRoute>
-            <QuizManager />
-          </AdminRoute>
-        } />
-        <Route path="/admin/resources" element={
-          <AdminRoute>
-            <ResourceManager />
-          </AdminRoute>
-        } />
-        <Route path="/admin/companies" element={
-          <AdminRoute>
-            <CompanyManager />
-          </AdminRoute>
-        } />
-        <Route path="/admin/analytics" element={
-          <AdminRoute>
-            <Analytics />
-          </AdminRoute>
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
         } />
       </Routes>
     </div>
@@ -130,11 +104,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <AdminProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AdminProvider>
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   );
 }
