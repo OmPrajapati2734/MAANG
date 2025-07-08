@@ -195,11 +195,6 @@ const Practice: React.FC = () => {
                   >
                     <Icon className="w-5 h-5" />
                     <span>{tab.name}</span>
-                    <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
-                      isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {count}
-                    </span>
                   </button>
                 );
               })}

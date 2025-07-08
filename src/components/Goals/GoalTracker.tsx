@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Plus, Calendar, TrendingUp, Award, Flame, CheckCircle } from 'lucide-react';
+import { Target, Plus, Calendar, TrendingUp, Award, Flame, CheckCircle, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -13,6 +13,7 @@ interface Goal {
   start_date: string;
   end_date: string;
   is_completed: boolean;
+  created_at: string;
 }
 
 const GoalTracker: React.FC = () => {
@@ -20,6 +21,7 @@ const GoalTracker: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [streak, setStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
 
@@ -83,8 +85,9 @@ const GoalTracker: React.FC = () => {
 
   const handleAddGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || submitting) return;
 
+    setSubmitting(true);
     try {
       const startDate = new Date();
       const endDate = new Date();
@@ -103,9 +106,13 @@ const GoalTracker: React.FC = () => {
 
       const goalData = {
         user_id: user.id,
-        ...newGoal,
+        goal_type: newGoal.goal_type,
+        target_type: newGoal.target_type,
+        target_value: newGoal.target_value,
+        current_value: 0,
         start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0]
+        end_date: endDate.toISOString().split('T')[0],
+        is_completed: false
       };
 
       const { error } = await supabase
@@ -123,6 +130,9 @@ const GoalTracker: React.FC = () => {
       fetchGoals();
     } catch (error) {
       console.error('Error adding goal:', error);
+      alert('Failed to add goal. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -147,6 +157,22 @@ const GoalTracker: React.FC = () => {
       fetchGoals();
     } catch (error) {
       console.error('Error updating goal progress:', error);
+    }
+  };
+
+  const deleteGoal = async (goalId: string) => {
+    if (!confirm('Are you sure you want to delete this goal?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_goals')
+        .delete()
+        .eq('id', goalId);
+
+      if (error) throw error;
+      fetchGoals();
+    } catch (error) {
+      console.error('Error deleting goal:', error);
     }
   };
 
@@ -288,13 +314,21 @@ const GoalTracker: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-gray-900">
-                        {goal.current_value}/{goal.target_value}
+                    <div className="flex items-center space-x-2">
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-gray-900">
+                          {goal.current_value}/{goal.target_value}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {Math.round(progressPercentage)}%
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {Math.round(progressPercentage)}%
-                      </div>
+                      <button
+                        onClick={() => deleteGoal(goal.id)}
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
 
@@ -349,7 +383,15 @@ const GoalTracker: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Goal</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add New Goal</h3>
+              <button
+                onClick={() => setShowAddGoal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             
             <form onSubmit={handleAddGoal} className="space-y-4">
               <div>
@@ -385,13 +427,13 @@ const GoalTracker: React.FC = () => {
                   type="number"
                   min="1"
                   value={newGoal.target_value}
-                  onChange={(e) => setNewGoal({...newGoal, target_value: parseInt(e.target.value)})}
+                  onChange={(e) => setNewGoal({...newGoal, target_value: parseInt(e.target.value) || 1})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowAddGoal(false)}
@@ -401,9 +443,10 @@ const GoalTracker: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Add Goal
+                  {submitting ? 'Adding...' : 'Add Goal'}
                 </button>
               </div>
             </form>
